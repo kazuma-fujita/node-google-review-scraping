@@ -1,11 +1,15 @@
 const puppeteer = require("puppeteer");
-let shopInformation = require("./lib/shop-information.js");
-let shopReview = require("./lib/shop-review.js");
+const shopInformation = require("./lib/shop-information.js");
+const shopReview = require("./lib/shop-review.js");
+const WINDOW_WIDTH = 1600;
+const WINDOW_HIGHT = 950;
 
 (async () => {
   const browser = await puppeteer.launch({
-    headless: false, // 動作確認するためheadlessモードにしない
-    slowMo: 10, // 動作確認しやすいようにpuppeteerの操作を遅延させる
+    // 動作確認するためheadlessモードにしない
+    headless: false,
+    // 動作確認しやすいようにpuppeteerの操作を遅延させる
+    slowMo: 10,
     args: [
       // Chromeウィンドウのサイズ
       "--window-size=1600,950",
@@ -17,8 +21,7 @@ let shopReview = require("./lib/shop-review.js");
   });
   const page = await browser.newPage();
   // 画面の大きさ設定
-  // Chromeのウィンドウ自体の大きさの調整ではないです
-  await page.setViewport({ width: 1600, height: 950 });
+  await page.setViewport({ width: WINDOW_WIDTH, height: WINDOW_HIGHT });
   try {
     await page.goto("https://www.google.com/");
     // await page.type("input[name=q]", "中野駅南歯科クリニック", { delay: 100 });
@@ -29,70 +32,50 @@ let shopReview = require("./lib/shop-review.js");
       page.click('input[type="submit"]'),
     ]);
 
+    // 店舗名を取得
     const name = await shopInformation.getShopName(page);
     console.log("name:", name);
 
+    // 所在地を取得
     const address = await shopInformation.getShopAddress(page);
     console.log("address:", address);
 
+    // 電話番号を取得
     const telephoneNumber = await shopInformation.getShopTelephoneNumber(page);
     console.log("telephoneNumber:", telephoneNumber);
 
-    // const scoreElements = await page.$$(
-    //   '[data-attrid="kc:/collection/knowledge_panels/local_reviewable:star_score"] > div > div > span'
-    // );
-    // if (2 > scoreElements)
-    //   throw Error("Score and number of reviews not found.");
-    // console.log("score:", scoreElements);
-
-    // const scores = await Promise.all(
-    //   scoreElements.map(
-    //     async (elementHandle) =>
-    //       await (await elementHandle.getProperty("innerText")).jsonValue()
-    //   )
-    // );
-
+    // 店舗レビュースコアを取得
     const score = await shopInformation.getShopScore(page);
-    const reviewCount = await shopInformation.getShopReviewCount(page);
 
+    // 店舗レビュー数を取得
+    const reviewCount = await shopInformation.getShopReviewCount(page);
     console.log("scores:", score, reviewCount);
 
-    const reviewDialogLink = await page.waitForSelector(
-      '[data-async-trigger="reviewDialog"]'
-    );
-    await Promise.all([
-      page.waitForSelector("div.review-dialog-list", { visible: true }),
-      reviewDialogLink.click(),
-    ]);
+    // クチコミダイアログを開く
+    await shopReview.openShopReviewDialog(page);
 
     // クチコミダイアログをクチコミ全件分スクロール
-    shopReview.scrollShopReviewDialog(page);
+    await shopReview.scrollShopReviewDialog(page, reviewCount);
 
-    await page.$$eval("a.review-more-link", (links) =>
-      links.map((link) => link.click())
-    );
+    // 「もっと見る」リンクを全てクリック
+    await shopReview.clickAllMoreLink(page);
 
-    const reviewElements = await page.$$("div.gws-localreviews__google-review");
-    if (reviewElements.length === 0) throw Error("There is no review count.");
-    const reviews = await Promise.all(
-      reviewElements.map(
-        async (elementHandle) =>
-          await (await elementHandle.getProperty("innerText")).jsonValue()
-      )
-    );
+    // 全てのレビューを取得
+    const reviews = await shopReview.getAllReviews(page);
 
-    // reviews.map((review) => {
-    //   console.log(review);
-    // });
+    reviews.map((review) => {
+      console.log(review);
+    });
 
+    // スクリーンショット取得
     await page.screenshot({
-      path: "screenshot/review.practice.png",
+      path: "screenshot/review.png",
       fullPage: true,
     });
   } catch (err) {
     console.error("[ERROR] ", err);
     throw err;
   } finally {
-    // await browser.close();
+    await browser.close();
   }
 })();

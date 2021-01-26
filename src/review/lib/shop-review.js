@@ -1,4 +1,16 @@
-exports.scrollShopReviewDialog = async function (page) {
+exports.openShopReviewDialog = async function (page) {
+  // 「Googleのクチコミ(n)」リンク取得
+  const reviewDialogLink = await page.waitForSelector(
+    '[data-async-trigger="reviewDialog"]'
+  );
+  // ダイアログを開く時は waitForSelector に visible: true オプションをつける
+  await Promise.all([
+    page.waitForSelector("div.review-dialog-list", { visible: true }),
+    reviewDialogLink.click(),
+  ]);
+};
+
+exports.scrollShopReviewDialog = async function (page, reviewCount) {
   // evaluateブロック内のconsole.log出力の為、コンソールイベントを登録
   page.on("console", (msg) => {
     for (let i = 0; i < msg._args.length; ++i)
@@ -29,4 +41,25 @@ exports.scrollShopReviewDialog = async function (page) {
     },
     { selector: reviewDialogSelector, loopCount }
   );
+};
+
+exports.clickAllMoreLink = async function (page) {
+  // クチコミダイアログ内の「もっと見る」リンクを全て開く
+  await page.$$eval("a.review-more-link", (links) =>
+    links.map((link) => link.click())
+  );
+};
+
+exports.getAllReviews = async function (page) {
+  // クチコミダイアログの一覧要素を取得
+  const reviewElements = await page.$$("div.gws-localreviews__google-review");
+  if (reviewElements.length === 0) throw Error("There is no review count.");
+  // クチコミ配列を取得
+  const reviews = await Promise.all(
+    reviewElements.map(
+      async (elementHandle) =>
+        await (await elementHandle.getProperty("innerText")).jsonValue()
+    )
+  );
+  return reviews;
 };
