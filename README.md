@@ -1,5 +1,9 @@
 # Google 店舗クチコミ情報スクレイピング実行方法
 
+## 実行環境を作成する
+
+[Node.js/Puppeteer で Google の店舗クチコミ情報をスクレイピングする](https://zuma-lab.com/posts/node-web-scraping) に詳しい環境作成手順を書きましたので、手順に沿って環境を作成してください。
+
 ## 検索キーワードを設定する
 
 まず検索する店舗名の検索を記述する `src/review/input/search_keywords.txt` ファイルを作成します。
