@@ -6,11 +6,12 @@ exports.scrapingShopReviews = async function (page, shopName) {
   await page.goto("https://www.google.com/");
   console.log("searchKeyword:", shopName);
   // 店舗名を入力
-  await page.type("input[name=q]", shopName, { delay: 100 });
-  // 検索実行
+  await page.type('input[title="検索"]', shopName, { delay: 100 });
   await Promise.all([
     page.waitForNavigation({ waitUntil: "domcontentloaded" }),
-    page.click('input[type="submit"]'),
+    page.evaluate(() =>
+      document.querySelector('input[value^="Google"]').click()
+    ),
   ]);
 
   // 店舗名を取得

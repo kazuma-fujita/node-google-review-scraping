@@ -8,20 +8,18 @@ exports.getShopAddress = async function (page) {
   const elements = await page.$$(
     '[data-attrid="kc:/location/location:address"] > div > div > span'
   );
-  if (2 !== elements.length)
-    throw Error('data-attrid="kc:/location/location:address" not found.');
-  return await (await elements[1].getProperty("innerText")).jsonValue();
+  return 2 === elements.length
+    ? await (await elements[1].getProperty("innerText")).jsonValue()
+    : "";
 };
 
 exports.getShopTelephoneNumber = async function (page) {
   const elements = await page.$$(
     '[data-attrid="kc:/collection/knowledge_panels/has_phone:phone"] > div > div > span'
   );
-  if (2 !== elements.length)
-    throw Error(
-      'data-attrid="kc:/collection/knowledge_panels/has_phone:phone" not found.'
-    );
-  return await (await elements[1].getProperty("innerText")).jsonValue();
+  return 2 === elements.length
+    ? await (await elements[1].getProperty("innerText")).jsonValue()
+    : "";
 };
 
 const getScoreElements = async function (page) {
