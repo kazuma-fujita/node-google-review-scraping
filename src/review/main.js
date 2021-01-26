@@ -1,4 +1,5 @@
 const puppeteer = require("puppeteer");
+const fs = require("fs");
 const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 const format = require("date-fns/format");
 const ja = require("date-fns/locale/ja");
@@ -8,13 +9,13 @@ const WINDOW_WIDTH = 1600;
 const WINDOW_HIGHT = 950;
 
 async function scrapingShopReviews(page, shopName) {
-  // Google検索ページを開く
+  // Google検索Topを開く
   await page.goto("https://www.google.com/");
+  console.log("searchKeyword:", shopName);
   // 店舗名を入力
   await page.type("input[name=q]", shopName, { delay: 100 });
   // 検索実行
   await Promise.all([
-    // page.waitForNavigation({ waitUntil: ["load", "networkidle2"] }),
     page.waitForNavigation({ waitUntil: "domcontentloaded" }),
     page.click('input[type="submit"]'),
   ]);
@@ -33,10 +34,11 @@ async function scrapingShopReviews(page, shopName) {
 
   // 店舗レビュースコアを取得
   const score = await shopInformation.getShopScore(page);
+  console.log("score:", score);
 
   // 店舗レビュー数を取得
   const reviewCount = await shopInformation.getShopReviewCount(page);
-  console.log("scores:", score, reviewCount);
+  console.log("reviewCount:", reviewCount);
 
   // クチコミダイアログを開く
   await shopReview.openShopReviewDialog(page);
@@ -50,7 +52,8 @@ async function scrapingShopReviews(page, shopName) {
   // 全てのレビューを取得
   const reviews = await shopReview.getAllReviews(page);
 
-  return reviews.map((review) => ({
+  // 取得した店舗情報をオブジェクト配列にして返却
+  const storeObjects = reviews.map((review) => ({
     name: name,
     address: address,
     telephoneNumber: telephoneNumber,
@@ -58,32 +61,41 @@ async function scrapingShopReviews(page, shopName) {
     reviewCount: reviewCount,
     review: review,
   }));
+
+  return storeObjects;
 }
 
 (async () => {
   const browser = await puppeteer.launch({
     // 動作確認するためheadlessモードにしない
     headless: false,
-    // 動作確認しやすいようにpuppeteerの操作を遅延させる
+    // 動作確認しやすいようにpuppeteerの操作を遅延
     slowMo: 10,
     args: [
       // Chromeウィンドウのサイズ
       `--window-size=${WINDOW_WIDTH}, ${WINDOW_HIGHT}`,
       // Chromeウィンドウのポジション
       "--window-position=100,50",
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
     ],
   });
   const page = await browser.newPage();
   // 画面の大きさ設定
   await page.setViewport({ width: WINDOW_WIDTH, height: WINDOW_HIGHT });
   try {
-    // 店舗レビューオブジェクト取得
-    const shopReviews = await scrapingShopReviews(
-      page,
-      "中野駅南歯科クリニック"
-    );
+    // 検索キーワードファイル読み込み
+    var text = fs.readFileSync("src/review/input/search_keywords.txt", "utf8");
+    var lines = text.toString().split("\n");
+    if (lines.length === 0)
+      throw Error("The line of the read file does not exist.");
+    let outputData = [];
+    // loop内を同期で処理する為 for of
+    for (const line of lines) {
+      // 店舗レビューオブジェクト取得
+      const shopReviews = await scrapingShopReviews(page, line);
+      // 最終的に出力する配列に結合
+      outputData = outputData.concat(shopReviews);
+    }
+
     // 出力csvファイル名のpostfix用に現在日時取得
     const formattedDate = format(new Date(), "yyyy-MM-dd", { locale: ja });
     // csvファイル出力設定
@@ -101,15 +113,14 @@ async function scrapingShopReviews(page, shopName) {
       ],
       encoding: "utf8",
     });
-    // console.log(shopReviews);
     // csv出力
     await csvWriter
-      .writeRecords(shopReviews)
+      .writeRecords(outputData)
       .then(() => console.log("Output csv complete."))
       .catch((error) => console.error(error));
-  } catch (err) {
-    console.error("[ERROR] ", err);
-    throw err;
+  } catch (error) {
+    console.error("[ERROR] ", error);
+    throw error;
   } finally {
     await browser.close();
   }
