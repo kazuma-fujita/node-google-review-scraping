@@ -31,6 +31,18 @@ const WINDOW_HIGHT = 950;
       // 最終的に出力する配列に結合
       outputData = outputData.concat(shopReviews);
     }
+    // 抽出キーワードファイル読み込み
+    const containKeywords = files.getContainKeywords();
+    // 抽出キーワードが存在すれば絞り込み
+    if (containKeywords.length > 0 && containKeywords[0] !== "") {
+      // 複数キーワードを正規表現変換
+      const keywords = containKeywords.join("|");
+      const regexp = new RegExp(keywords);
+      console.log("containKeywords:", regexp);
+      // 正規表現にマッチしたクチコミをフィルタリング
+      outputData = outputData.filter((data) => regexp.test(data.review));
+    }
+
     // csv出力
     await files.writeScv(outputData);
   } catch (error) {

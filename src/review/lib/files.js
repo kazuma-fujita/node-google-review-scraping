@@ -6,6 +6,9 @@ const fs = require("fs");
 // 出力csvファイル名のpostfix用に現在日時取得
 const formattedDate = format(new Date(), "yyyy-MM-dd", { locale: ja });
 
+// 抽出キーワードファイルパス
+const inputContainPath = "src/review/input/contain_keywords.txt";
+
 // 検索キーワードファイルパス
 const inputPath = "src/review/input/search_keywords.txt";
 
@@ -23,6 +26,13 @@ const csvHeader = [
 ];
 
 const fileEncoding = "utf8";
+
+exports.getContainKeywords = function () {
+  // クチコミ抽出キーワードファイル読み込み
+  var text = fs.readFileSync(inputContainPath, fileEncoding);
+  var lines = text.toString().split("\n");
+  return lines;
+};
 
 exports.getSearchKeywords = function () {
   // 検索キーワードファイル読み込み
