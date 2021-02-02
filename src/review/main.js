@@ -45,6 +45,9 @@ const WINDOW_HIGHT = 950;
 
     // csv出力
     await files.writeScv(outputData);
+
+    // utf8からshift-jisに変換
+    files.utf8toShiftJIS();
   } catch (error) {
     console.error("[ERROR] ", error);
     throw error;

@@ -2,6 +2,8 @@ const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 const format = require("date-fns/format");
 const ja = require("date-fns/locale/ja");
 const fs = require("fs");
+const path = require("path");
+const iconv = require("iconv-lite");
 
 // 出力csvファイル名のpostfix用に現在日時取得
 const formattedDate = format(new Date(), "yyyy-MM-dd", { locale: ja });
@@ -26,6 +28,7 @@ const csvHeader = [
 ];
 
 const fileEncoding = "utf8";
+const toFileEncoding = "Shift_JIS";
 
 exports.getContainKeywords = function () {
   // クチコミ抽出キーワードファイル読み込み
@@ -57,4 +60,18 @@ exports.writeScv = async function (outputData) {
     .writeRecords(outputData)
     .then(() => console.log("Output csv complete."))
     .catch((error) => console.error(error));
+};
+
+exports.utf8toShiftJIS = function () {
+  // csvファイルテキスト取得
+  var originalText = fs.readFileSync(outputPath, fileEncoding);
+  // ファイルを「書き込み専用モード」で開く
+  var fd = fs.openSync(outputPath, "w");
+  // 書き出すデータをShift_JISに変換して、バッファとして書き出す
+  var buf = iconv.encode(originalText, toFileEncoding);
+  fs.write(fd, buf, 0, buf.length, function (err, written, buffer) {
+    //  バッファをファイルに書き込む
+    if (err) throw err;
+    console.log("ファイルが正常に書き出しされました");
+  });
 };
