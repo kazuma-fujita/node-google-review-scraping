@@ -61,3 +61,7 @@ Output csv complete.
 ```
 
 output ディレクトリに shop_review_yyyy-MM-dd.csv が作成されていることを確認してください。
+
+出力 csv ファイルの文字コードは Shift-JIS です。
+
+引数のオプションで UTF-8 か Shift-JIS か選択できるようにも出来るので、要望があれば issues お願いします。
