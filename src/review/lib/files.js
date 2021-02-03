@@ -17,6 +17,9 @@ const inputPath = "src/review/input/search_keywords.txt";
 // csv出力ファイルパス
 const outputPath = `src/review/output/shop_review_${formattedDate}.csv`;
 
+// エラー出力ファイルパス
+const errorOutputPath = `src/review/output/error_${formattedDate}.csv`;
+
 // csvヘッダー
 const csvHeader = [
   { id: "name", title: "施設名" },
@@ -72,6 +75,13 @@ exports.utf8toShiftJIS = function () {
   fs.write(fd, buf, 0, buf.length, function (err, written, buffer) {
     //  バッファをファイルに書き込む
     if (err) throw err;
-    console.log("ファイルが正常に書き出しされました");
+    console.log("されました");
+  });
+};
+
+exports.writeErrorFile = function (errorMessage) {
+  fs.appendFile(errorOutputPath, errorMessage, (err) => {
+    if (err) throw err;
+    console.log(`Write error message [${errorMessage}]`);
   });
 };

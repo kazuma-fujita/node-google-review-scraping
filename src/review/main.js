@@ -26,8 +26,15 @@ const WINDOW_HIGHT = 950;
     let outputData = [];
     // loop内を同期で処理する為 for of
     for (const keyword of keywords) {
-      // 店舗レビューオブジェクト取得
-      const shopReviews = await scraping.scrapingShopReviews(page, keyword);
+      let shopReviews;
+      try {
+        // 店舗レビューオブジェクト取得
+        shopReviews = await scraping.scrapingShopReviews(page, keyword);
+      } catch (error) {
+        console.error("[SCRAPING ERROR] ", error);
+        files.writeErrorFile(`${keyword} - ${error}`);
+        continue;
+      }
       // 最終的に出力する配列に結合
       outputData = outputData.concat(shopReviews);
     }
