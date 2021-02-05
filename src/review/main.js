@@ -21,8 +21,9 @@ const WINDOW_HIGHT = 950;
   // 画面の大きさ設定
   await page.setViewport({ width: WINDOW_WIDTH, height: WINDOW_HIGHT });
   try {
+    files.getSearchKeywordLinesByCsv();
     // 検索キーワードファイル読み込み
-    const keywords = files.getSearchKeywords();
+    const keywords = files.getSearchKeywordLinesByCsv();
     let outputData = [];
     // loop内を同期で処理する為 for of
     for (const keyword of keywords) {
@@ -51,7 +52,7 @@ const WINDOW_HIGHT = 950;
     }
 
     // csv出力
-    await files.writeScv(outputData);
+    await files.writeCsv(outputData);
 
     // utf8からshift-jisに変換
     files.utf8toShiftJIS();

@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "csv-parse": "^4.15.1",
     "csv-writer": "^1.6.0",
     "date-fns": "^2.16.1",
     "iconv-lite": "^0.6.2",

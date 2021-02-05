@@ -4,6 +4,7 @@ const ja = require("date-fns/locale/ja");
 const fs = require("fs");
 const path = require("path");
 const iconv = require("iconv-lite");
+const csvSync = require("csv-parse/lib/sync");
 
 // 出力csvファイル名のpostfix用に現在日時取得
 const formattedDate = format(new Date(), "yyyy-MM-dd", { locale: ja });
@@ -14,11 +15,14 @@ const inputContainPath = "src/review/input/contain_keywords.txt";
 // 検索キーワードファイルパス
 const inputPath = "src/review/input/search_keywords.txt";
 
+// 検索キーワードcsvファイルパス
+const csvInputPath = "src/review/input/search_keywords.csv";
+
 // csv出力ファイルパス
-const outputPath = `src/review/output/shop_review_${formattedDate}.csv`;
+const outputPath = `src/review/output/clinic_review_${formattedDate}.csv`;
 
 // エラー出力ファイルパス
-const errorOutputPath = `src/review/output/error_${formattedDate}.csv`;
+const errorOutputPath = `src/review/output/error_${formattedDate}.txt`;
 
 // csvヘッダー
 const csvHeader = [
@@ -49,7 +53,18 @@ exports.getSearchKeywords = function () {
   return lines;
 };
 
-exports.writeScv = async function (outputData) {
+exports.getSearchKeywordLinesByCsv = function () {
+  // 検索キーワードcsvファイル読み込み
+  const data = fs.readFileSync(csvInputPath);
+  const results = csvSync(data);
+  if (results.length === 0)
+    throw Error("The line of the read file does not exist.");
+  const lines = results.map((record) => record[0]);
+  if (lines.length === 0) throw Error("The Line length zero.");
+  return lines;
+};
+
+exports.writeCsv = async function (outputData) {
   // csvファイル出力設定
   const csvWriter = createCsvWriter({
     // 出力ファイル名
@@ -75,12 +90,12 @@ exports.utf8toShiftJIS = function () {
   fs.write(fd, buf, 0, buf.length, function (err, written, buffer) {
     //  バッファをファイルに書き込む
     if (err) throw err;
-    console.log("されました");
+    console.log("Converted csv file from shift-jis to utf8.");
   });
 };
 
 exports.writeErrorFile = function (errorMessage) {
-  fs.appendFile(errorOutputPath, errorMessage, (err) => {
+  fs.appendFile(errorOutputPath, `${errorMessage}\n`, (err) => {
     if (err) throw err;
     console.log(`Write error message [${errorMessage}]`);
   });
