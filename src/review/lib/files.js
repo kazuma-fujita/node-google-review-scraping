@@ -59,7 +59,7 @@ exports.getSearchKeywordLinesByCsv = function () {
   const results = csvSync(data);
   if (results.length === 0)
     throw Error("The line of the read file does not exist.");
-  const lines = results.map((record) => record[0]);
+  const lines = results.map((record) => `${record[0]} ${record[1]}`);
   if (lines.length === 0) throw Error("The Line length zero.");
   return lines;
 };
